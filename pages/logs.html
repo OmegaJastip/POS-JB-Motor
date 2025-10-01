@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>POS Alat Motor - Log Aktivitas</title>
+  <link rel="manifest" href="../manifest.json" />
+  <link rel="stylesheet" href="../css/styles.css" />
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('../service-worker.js')
+          .then(reg => console.log('Service Worker registered.', reg))
+          .catch(err => console.log('Service Worker registration failed:', err));
+      });
+    }
+  </script>
+</head>
+<body>
+  <header>
+    <h1>POS Alat Motor</h1>
+    <nav>
+      <a href="../index.html" class="nav-btn">Home</a>
+      <a href="inventory.html" class="nav-btn">Inventori</a>
+      <a href="sales.html" class="nav-btn">Penjualan</a>
+      <a href="customers.html" class="nav-btn">Pelanggan</a>
+      <a href="reports.html" class="nav-btn">Laporan</a>
+      <a href="logs.html" class="nav-btn active">Log Aktivitas</a>
+    </nav>
+  </header>
+
+  <main>
+    <section id="logs-section" class="section active">
+      <h2>Log Aktivitas</h2>
+      <div>
+        <label for="log-filter">Filter berdasarkan tipe:</label>
+        <select id="log-filter">
+          <option value="all">Semua</option>
+          <option value="inventory">Inventori</option>
+          <option value="customers">Pelanggan</option>
+          <option value="sales">Penjualan</option>
+        </select>
+      </div>
+      <table id="logs-table">
+        <thead>
+          <tr>
+            <th>Tanggal</th>
+            <th>Tipe</th>
+            <th>ID</th>
+            <th>Perubahan</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+  </main>
+
+  <script src="../js/db.js"></script>
+  <script src="../js/app.js"></script>
+  <script>
+    const filterSelect = document.getElementById('log-filter');
+    const logsTableBody = document.querySelector('#logs-table tbody');
+
+    const renderFilteredLogs = (logs, filter) => {
+      logsTableBody.innerHTML = '';
+      const filteredLogs = filter === 'all' ? logs : logs.filter(log => log.type === filter);
+      filteredLogs.sort((a, b) => new Date(b.date) - new Date(a.date)).forEach(log => {
+        const row = document.createElement('tr');
+        const changesStr = log.changes ? log.changes.map(c => `${c.field}: ${c.old} -> ${c.new}`).join('; ') : '-';
+        row.innerHTML = `
+          <td>${new Date(log.date).toLocaleString('id-ID')}</td>
+          <td>${log.type}</td>
+          <td>${log.id}</td>
+          <td>${changesStr}</td>
+        `;
+        logsTableBody.appendChild(row);
+      });
+    };
+
+    const loadAndRenderLogs = async () => {
+      const logs = await getAllItems('logs');
+      renderFilteredLogs(logs, filterSelect.value);
+    };
+
+    filterSelect.addEventListener('change', () => {
+      loadAndRenderLogs();
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+      openDB().then(() => {
+        loadAndRenderLogs();
+      });
+    });
+  </script>
+</body>
+</html>

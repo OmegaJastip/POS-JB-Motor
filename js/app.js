@@ -3,28 +3,6 @@ let customers = [];
 let cart = [];
 let currentSaleId = null;
 
-document.addEventListener('DOMContentLoaded', () => {
-  openDB().then(() => {
-    if (document.getElementById('analytics-section')) {
-      loadAnalytics();
-    } else if (document.getElementById('inventory-section')) {
-      loadInventory();
-      loadCustomers();
-      setupForms();
-    } else if (document.getElementById('sales-section')) {
-      loadInventory();
-      loadCustomers();
-      setupForms();
-      loadSalesHistory();
-    } else if (document.getElementById('customers-section')) {
-      loadCustomers();
-      setupForms();
-    } else if (document.getElementById('reports-section')) {
-      loadReports();
-    }
-  });
-});
-
 function loadAnalytics() {
   if (!document.getElementById('salesChart')) return;
   Promise.all([getAllItems('sales'), getAllItems('customers')]).then(([sales, customers]) => {
@@ -159,6 +137,59 @@ const loadInventory = async () => {
   updateLowStockNotification();
 };
 
+const loadCustomers = async () => {
+  customers = await getAllItems('customers');
+  renderCustomersTable();
+};
+
+const setupRealtimeUpdates = () => {
+  // Polling every 2 seconds to update inventory and customers
+  setInterval(async () => {
+    const newInventory = await getAllItems('inventory');
+    const newCustomers = await getAllItems('customers');
+
+    // Check if inventory changed
+    if (JSON.stringify(newInventory) !== JSON.stringify(inventory)) {
+      inventory = newInventory;
+      renderInventoryTable();
+      updateSalesItemSelect();
+      updateLowStockNotification();
+    }
+
+    // Check if customers changed
+    if (JSON.stringify(newCustomers) !== JSON.stringify(customers)) {
+      customers = newCustomers;
+      renderCustomersTable();
+    }
+  }, 2000);
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+  openDB().then(() => {
+    loadLogs(); // Load logs on every page
+    if (document.getElementById('analytics-section')) {
+      loadAnalytics();
+    } else if (document.getElementById('inventory-section')) {
+      loadInventory();
+      loadCustomers();
+      setupForms();
+      setupRealtimeUpdates();
+    } else if (document.getElementById('sales-section')) {
+      loadInventory();
+      loadCustomers();
+      setupForms();
+      loadSalesHistory();
+      setupRealtimeUpdates();
+    } else if (document.getElementById('customers-section')) {
+      loadCustomers();
+      setupForms();
+      setupRealtimeUpdates();
+    } else if (document.getElementById('reports-section')) {
+      loadReports();
+    }
+  });
+});
+
 const handleInventorySubmit = async (e) => {
   e.preventDefault();
   const id = document.getElementById('inventory-id').value;
@@ -170,10 +201,19 @@ const handleInventorySubmit = async (e) => {
   if (id) {
     item.id = parseInt(id);
     item.updated_at = new Date().toISOString();
+    const oldItem = inventory.find(i => i.id === item.id);
+    const changes = [];
+    if (oldItem.name !== name) changes.push({field: 'name', old: oldItem.name, new: name});
+    if (oldItem.price !== price) changes.push({field: 'price', old: oldItem.price, new: price});
+    if (oldItem.stock !== stock) changes.push({field: 'stock', old: oldItem.stock, new: stock});
+    if (changes.length > 0) {
+      await addItem('logs', { date: new Date().toISOString(), type: 'inventory', id: item.id, changes });
+    }
     await updateItem('inventory', item);
   } else {
     item.created_at = new Date().toISOString();
-    await addItem('inventory', item);
+    const newId = await addItem('inventory', item);
+    await addItem('logs', { date: new Date().toISOString(), type: 'inventory', id: newId, changes: [{field: 'created', old: '', new: JSON.stringify(item)}] });
   }
 
   document.getElementById('inventory-form').reset();
@@ -201,6 +241,8 @@ const cancelInventoryEdit = () => {
 
 const deleteInventory = async (id) => {
   if (confirm('Apakah Anda yakin ingin menghapus item ini?')) {
+    const item = inventory.find(i => i.id === id);
+    await addItem('logs', { date: new Date().toISOString(), type: 'inventory', id, changes: [{field: 'deleted', old: JSON.stringify(item), new: ''}] });
     await deleteItem('inventory', id);
     loadInventory();
   }
@@ -276,7 +318,8 @@ const completeSale = async () => {
     date: new Date().toISOString()
   };
 
-  await addItem('sales', sale);
+  const saleId = await addItem('sales', sale);
+  await addItem('logs', { date: new Date().toISOString(), type: 'sales', id: saleId, changes: [{field: 'created', old: '', new: JSON.stringify(sale)}] });
 
   // Update inventory stock
   for (const item of cart) {
@@ -293,11 +336,6 @@ const completeSale = async () => {
   alert('Penjualan selesai!');
 };
 
-const loadCustomers = async () => {
-  customers = await getAllItems('customers');
-  renderCustomersTable();
-};
-
 const renderCustomersTable = () => {
   const tbody = document.querySelector('#customers-table tbody');
   if (!tbody) return;
@@ -308,6 +346,7 @@ const renderCustomersTable = () => {
       <td>${customer.name}</td>
       <td>${customer.phone || '-'}</td>
       <td>${customer.created_at ? new Date(customer.created_at).toLocaleDateString('id-ID') : '-'}</td>
+      <td>${customer.updated_at ? new Date(customer.updated_at).toLocaleDateString('id-ID') : '-'}</td>
       <td>
         <button onclick="editCustomer(${customer.id})">Edit</button>
         <button onclick="deleteCustomer(${customer.id})">Hapus</button>
@@ -327,10 +366,18 @@ const handleCustomerSubmit = async (e) => {
   if (id) {
     customer.id = parseInt(id);
     customer.updated_at = new Date().toISOString();
+    const oldCustomer = customers.find(c => c.id === customer.id);
+    const changes = [];
+    if (oldCustomer.name !== name) changes.push({field: 'name', old: oldCustomer.name, new: name});
+    if (oldCustomer.phone !== phone) changes.push({field: 'phone', old: oldCustomer.phone || '', new: phone || ''});
+    if (changes.length > 0) {
+      await addItem('logs', { date: new Date().toISOString(), type: 'customers', id: customer.id, changes });
+    }
     await updateItem('customers', customer);
   } else {
     customer.created_at = new Date().toISOString();
-    await addItem('customers', customer);
+    const newId = await addItem('customers', customer);
+    await addItem('logs', { date: new Date().toISOString(), type: 'customers', id: newId, changes: [{field: 'created', old: '', new: JSON.stringify(customer)}] });
   }
 
   document.getElementById('customer-form').reset();
@@ -357,6 +404,8 @@ const cancelCustomerEdit = () => {
 
 const deleteCustomer = async (id) => {
   if (confirm('Apakah Anda yakin ingin menghapus pelanggan ini?')) {
+    const customer = customers.find(c => c.id === id);
+    await addItem('logs', { date: new Date().toISOString(), type: 'customers', id, changes: [{field: 'deleted', old: JSON.stringify(customer), new: ''}] });
     await deleteItem('customers', id);
     loadCustomers();
   }
@@ -404,6 +453,7 @@ const renderInventoryTable = (items = inventory) => {
       <td>${item.price.toLocaleString('id-ID')}</td>
       <td>${item.stock}</td>
       <td>${item.created_at ? new Date(item.created_at).toLocaleDateString('id-ID') : '-'}</td>
+      <td>${item.updated_at ? new Date(item.updated_at).toLocaleDateString('id-ID') : '-'}</td>
       <td>
         <button onclick="editInventory(${item.id})">Edit</button>
         <button onclick="deleteInventory(${item.id})">Hapus</button>
@@ -471,4 +521,26 @@ const exportToCSV = (data, filename) => {
   a.download = filename;
   a.click();
   URL.revokeObjectURL(url);
+};
+
+const loadLogs = async () => {
+  const logs = await getAllItems('logs');
+  renderLogsTable(logs);
+};
+
+const renderLogsTable = (logs) => {
+  const tbody = document.querySelector('#logs-table tbody');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+  logs.sort((a, b) => new Date(b.date) - new Date(a.date)).forEach(log => {
+    const row = document.createElement('tr');
+    const changesStr = log.changes ? log.changes.map(c => `${c.field}: ${c.old} -> ${c.new}`).join('; ') : '-';
+    row.innerHTML = `
+      <td>${new Date(log.date).toLocaleString('id-ID')}</td>
+      <td>${log.type}</td>
+      <td>${log.id}</td>
+      <td>${changesStr}</td>
+    `;
+    tbody.appendChild(row);
+  });
 };

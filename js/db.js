@@ -2,7 +2,7 @@ let db;
 
 const openDB = () => {
   return new Promise((resolve, reject) => {
-    const request = indexedDB.open('PosMotorDB', 1);
+    const request = indexedDB.open('PosMotorDB', 2);
     request.onerror = () => reject(request.error);
     request.onsuccess = () => {
       db = request.result;
@@ -18,6 +18,9 @@ const openDB = () => {
       }
       if (!db.objectStoreNames.contains('customers')) {
         db.createObjectStore('customers', { keyPath: 'id', autoIncrement: true });
+      }
+      if (!db.objectStoreNames.contains('logs')) {
+        db.createObjectStore('logs', { keyPath: 'id', autoIncrement: true });
       }
     };
   });

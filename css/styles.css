@@ -38,6 +38,12 @@ main {
   padding: 1rem;
 }
 
+#logs-section {
+  padding: 1rem;
+  margin-top: 2rem;
+  border-top: 1px solid #ddd;
+}
+
 .section {
   display: none;
 }
