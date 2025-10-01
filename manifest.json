@@ -1,0 +1,9 @@
+{
+  "name": "POS Alat Motor",
+  "short_name": "POS Motor",
+  "description": "Aplikasi POS untuk bisnis jual beli alat motor",
+  "start_url": "/index.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#007bff"
+}
