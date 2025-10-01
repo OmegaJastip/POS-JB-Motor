@@ -2,10 +2,15 @@ const CACHE_NAME = 'pos-motor-v1';
 const urlsToCache = [
   '/',
   '/index.html',
-  '/styles.css',
-  '/app.js',
-  '/db.js',
-  '/manifest.json'
+  '/pages/inventory.html',
+  '/pages/sales.html',
+  '/pages/customers.html',
+  '/pages/reports.html',
+  '/css/styles.css',
+  '/js/app.js',
+  '/js/db.js',
+  '/manifest.json',
+  '/images/icon-192.svg'
 ];
 
 self.addEventListener('install', event => {

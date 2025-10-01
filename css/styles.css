@@ -92,6 +92,28 @@ th {
   font-size: 1.2rem;
 }
 
+#inventory-search {
+  margin: 0.5rem 0 1rem 0;
+  padding: 0.5rem;
+  width: 100%;
+  max-width: 300px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+#start-barcode-scan {
+  margin-left: 0.5rem;
+  background-color: #28a745;
+}
+
+#start-barcode-scan:hover {
+  background-color: #218838;
+}
+
+.low-stock {
+  background-color: #fff3cd;
+}
+
 @media (max-width: 600px) {
   form {
     flex-direction: column;

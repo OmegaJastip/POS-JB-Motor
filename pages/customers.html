@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>POS Alat Motor - Pelanggan</title>
+  <link rel="manifest" href="../manifest.json" />
+  <link rel="stylesheet" href="../css/styles.css" />
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('../service-worker.js')
+          .then(reg => console.log('Service Worker registered.', reg))
+          .catch(err => console.log('Service Worker registration failed:', err));
+      });
+    }
+  </script>
+</head>
+<body>
+  <header>
+    <h1>POS Alat Motor</h1>
+    <nav>
+      <a href="../index.html" class="nav-btn">Home</a>
+      <a href="inventory.html" class="nav-btn">Inventori</a>
+      <a href="sales.html" class="nav-btn">Penjualan</a>
+      <a href="customers.html" class="nav-btn">Pelanggan</a>
+      <a href="reports.html" class="nav-btn">Laporan</a>
+    </nav>
+  </header>
+
+  <main>
+    <section id="customers-section" class="section active">
+      <h2>Pelanggan</h2>
+      <form id="customer-form">
+        <input type="hidden" id="customer-id" />
+        <input type="text" id="customer-name" placeholder="Nama Pelanggan" required />
+        <input type="text" id="customer-phone" placeholder="Nomor Telepon" />
+        <button type="submit">Simpan</button>
+        <button type="button" id="customer-cancel" style="display:none;">Batal</button>
+      </form>
+      <table id="customers-table">
+        <thead>
+          <tr>
+            <th>Nama</th>
+            <th>Telepon</th>
+            <th>Tanggal Dibuat</th>
+            <th>Aksi</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+  </main>
+
+  <script src="../js/db.js"></script>
+  <script src="../js/app.js"></script>
+</body>
+</html>
