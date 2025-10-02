@@ -1,6 +1,0 @@
-- [ ] Add logging for inventory create in handleInventorySubmit
-- [ ] Add logging for inventory delete in deleteInventory
-- [ ] Add logging for customers create in handleCustomerSubmit
-- [ ] Add logging for customers delete in deleteCustomer
-- [ ] Add logging for sales create in completeSale
-- [ ] Add logging for sales delete in deleteSale
