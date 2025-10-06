@@ -15,38 +15,64 @@
       });
     }
   </script>
+  <script src="https://cdn.jsdelivr.net/npm/quagga@0.12.1/dist/quagga.min.js"></script>
 </head>
 <body>
   <header>
     <h1>POS Alat Motor</h1>
-    <nav>
-      <a href="../index.html" class="nav-btn">Home</a>
-      <a href="inventory.html" class="nav-btn">Inventori</a>
-      <a href="sales.html" class="nav-btn">Penjualan</a>
-      <a href="customers.html" class="nav-btn">Pelanggan</a>
-      <a href="reports.html" class="nav-btn">Laporan</a>
-      <a href="logs.html" class="nav-btn">Log Aktivitas</a>
-    </nav>
   </header>
 
   <main>
     <section id="inventory-section" class="section active">
       <h2>Inventori</h2>
-      <form id="inventory-form">
-        <input type="hidden" id="inventory-id" />
-        <input type="text" id="inventory-name" placeholder="Nama Alat Motor" required />
-        <input type="text" id="inventory-price" placeholder="Harga (Rp)" required oninput="formatPrice(this)" />
-        <input type="number" id="inventory-stock" placeholder="Stok" required min="0" />
-        <button type="submit">Simpan</button>
-        <button type="button" id="inventory-cancel" style="display:none;">Batal</button>
-      </form>
+      <button id="add-product-btn">Tambah Produk</button>
+      <div id="product-modal" class="modal">
+        <div class="modal-content">
+          <span class="close">&times;</span>
+          <h2>Tambah/Edit Produk</h2>
+          <form id="inventory-form">
+            <input type="hidden" id="inventory-id" />
+            <input type="text" id="inventory-name" placeholder="Nama Alat Motor" required />
+            <select id="inventory-category" required>
+              <option value="">Pilih Kategori</option>
+              <option value="Engine">Engine</option>
+              <option value="Brakes">Brakes</option>
+              <option value="Electrical">Electrical</option>
+              <option value="Suspension">Suspension</option>
+              <option value="Tools">Tools</option>
+              <option value="Other">Other</option>
+            </select>
+            <input type="text" id="inventory-brand" placeholder="Merk" />
+            <input type="text" id="inventory-model" placeholder="Model" />
+            <input type="text" id="inventory-price" placeholder="Harga (Rp)" required oninput="formatPrice(this)" />
+            <input type="number" id="inventory-stock" placeholder="Stok" required min="0" />
+            <input type="number" id="inventory-min-stock" placeholder="Stok Minimum" min="0" />
+            <textarea id="inventory-description" placeholder="Deskripsi"></textarea>
+            <input type="text" id="inventory-supplier" placeholder="Pemasok" />
+            <div style="display: flex; gap: 10px; align-items: center;">
+              <input type="text" id="inventory-barcode" placeholder="Barcode" />
+              <button type="button" id="scan-barcode-btn">Scan</button>
+            </div>
+            <div id="scanner-container" style="display:none; margin-top: 10px;"></div>
+            <button type="submit">Simpan</button>
+            <button type="button" id="inventory-cancel" style="display:none;">Batal</button>
+          </form>
+        </div>
+      </div>
       <input type="text" id="inventory-search" placeholder="Cari Inventori..." />
       <table id="inventory-table">
         <thead>
           <tr>
             <th>Nama</th>
+            <th>Kategori</th>
+            <th>Merk</th>
+            <th>Model</th>
             <th>Harga (Rp)</th>
             <th>Stok</th>
+            <th>Stok Minimum</th>
+            <th>Deskripsi</th>
+            <th>Pemasok</th>
+            <th>Barcode</th>
             <th>Tanggal Dibuat</th>
             <th>Terakhir Diupdate</th>
             <th>Aksi</th>
@@ -72,10 +98,99 @@
     </table>
   </section>
 
+  <nav class="bottom-nav">
+    <a href="../index.html" class="nav-btn">
+      <span class="icon">🏠</span>
+      <span class="label">Home</span>
+    </a>
+    <a href="inventory.html" class="nav-btn">
+      <span class="icon">📦</span>
+      <span class="label">Inventori</span>
+    </a>
+    <a href="sales.html" class="nav-btn">
+      <span class="icon">💰</span>
+      <span class="label">Penjualan</span>
+    </a>
+    <a href="customers.html" class="nav-btn">
+      <span class="icon">👥</span>
+      <span class="label">Pelanggan</span>
+    </a>
+    <a href="reports.html" class="nav-btn">
+      <span class="icon">📊</span>
+      <span class="label">Laporan</span>
+    </a>
+    <a href="logs.html" class="nav-btn">
+      <span class="icon">📝</span>
+      <span class="label">Log Aktivitas</span>
+    </a>
+  </nav>
+
   <script>
     function formatPrice(input) {
       const value = input.value.replace(/[^0-9]/g, '');
       input.value = value ? 'Rp ' + parseInt(value).toLocaleString('id-ID') : '';
+    }
+
+    // Modal functionality
+    const modal = document.getElementById('product-modal');
+    const btn = document.getElementById('add-product-btn');
+    const span = document.getElementsByClassName('close')[0];
+
+    btn.onclick = function() {
+      modal.style.display = 'block';
+    }
+
+    span.onclick = function() {
+      modal.style.display = 'none';
+    }
+
+    window.onclick = function(event) {
+      if (event.target == modal) {
+        modal.style.display = 'none';
+      }
+    }
+
+    // Barcode scanning functionality
+    const scanBtn = document.getElementById('scan-barcode-btn');
+    const barcodeInput = document.getElementById('inventory-barcode');
+    const scannerContainer = document.getElementById('scanner-container');
+
+    scanBtn.onclick = function() {
+      scannerContainer.style.display = 'block';
+      Quagga.init({
+        inputStream: {
+          name: "Live",
+          type: "LiveStream",
+          target: scannerContainer,
+          constraints: {
+            width: 480,
+            height: 320,
+            facingMode: "environment"
+          },
+        },
+        locator: {
+          patchSize: "medium",
+          halfSample: true
+        },
+        numOfWorkers: 2,
+        decoder: {
+          readers: ["code_128_reader", "ean_reader", "ean_8_reader", "code_39_reader", "upc_reader", "qr_code_reader"]
+        },
+        locate: true
+      }, function(err) {
+        if (err) {
+          console.log(err);
+          return;
+        }
+        Quagga.start();
+      });
+
+      Quagga.onDetected(function(result) {
+        const code = result.codeResult.code;
+        barcodeInput.value = code;
+        Quagga.stop();
+        scannerContainer.style.display = 'none';
+      });
     }
   </script>
   <script src="../js/db.js"></script>

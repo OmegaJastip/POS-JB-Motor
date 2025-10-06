@@ -93,9 +93,22 @@ const setupForms = () => {
   }
   if (document.getElementById('export-inventory-csv')) {
     document.getElementById('export-inventory-csv').addEventListener('click', () => {
-      const data = [['Nama', 'Harga', 'Stok']];
+      const data = [['Nama', 'Kategori', 'Merk', 'Model', 'Harga', 'Stok', 'Stok Minimum', 'Deskripsi', 'Pemasok', 'Barcode', 'Tanggal Dibuat', 'Terakhir Diupdate']];
       inventory.forEach(item => {
-        data.push([item.name, item.price, item.stock]);
+        data.push([
+          item.name,
+          item.category || '',
+          item.brand || '',
+          item.model || '',
+          item.price,
+          item.stock,
+          item.minStock || 0,
+          item.description || '',
+          item.supplier || '',
+          item.barcode || '',
+          item.created_at || '',
+          item.updated_at || ''
+        ]);
       });
       exportToCSV(data, 'inventori.csv');
     });
@@ -194,18 +207,32 @@ const handleInventorySubmit = async (e) => {
   e.preventDefault();
   const id = document.getElementById('inventory-id').value;
   const name = document.getElementById('inventory-name').value;
+  const category = document.getElementById('inventory-category').value;
+  const brand = document.getElementById('inventory-brand').value;
+  const model = document.getElementById('inventory-model').value;
   const price = parseInt(document.getElementById('inventory-price').value.replace(/[^0-9]/g, ''));
   const stock = parseInt(document.getElementById('inventory-stock').value);
+  const minStock = parseInt(document.getElementById('inventory-min-stock').value) || 0;
+  const description = document.getElementById('inventory-description').value;
+  const supplier = document.getElementById('inventory-supplier').value;
+  const barcode = document.getElementById('inventory-barcode').value;
 
-  const item = { name, price, stock };
+  const item = { name, category, brand, model, price, stock, minStock, description, supplier, barcode };
   if (id) {
     item.id = parseInt(id);
     item.updated_at = new Date().toISOString();
     const oldItem = inventory.find(i => i.id === item.id);
     const changes = [];
     if (oldItem.name !== name) changes.push({field: 'name', old: oldItem.name, new: name});
+    if (oldItem.category !== category) changes.push({field: 'category', old: oldItem.category || '', new: category});
+    if (oldItem.brand !== brand) changes.push({field: 'brand', old: oldItem.brand || '', new: brand});
+    if (oldItem.model !== model) changes.push({field: 'model', old: oldItem.model || '', new: model});
     if (oldItem.price !== price) changes.push({field: 'price', old: oldItem.price, new: price});
     if (oldItem.stock !== stock) changes.push({field: 'stock', old: oldItem.stock, new: stock});
+    if (oldItem.minStock !== minStock) changes.push({field: 'minStock', old: oldItem.minStock || 0, new: minStock});
+    if (oldItem.description !== description) changes.push({field: 'description', old: oldItem.description || '', new: description});
+    if (oldItem.supplier !== supplier) changes.push({field: 'supplier', old: oldItem.supplier || '', new: supplier});
+    if (oldItem.barcode !== barcode) changes.push({field: 'barcode', old: oldItem.barcode || '', new: barcode});
     if (changes.length > 0) {
       await addItem('logs', { date: new Date().toISOString(), type: 'inventory', id: item.id, changes });
     }
@@ -219,6 +246,7 @@ const handleInventorySubmit = async (e) => {
   document.getElementById('inventory-form').reset();
   document.getElementById('inventory-id').value = '';
   document.getElementById('inventory-cancel').style.display = 'none';
+  document.getElementById('product-modal').style.display = 'none';
   loadInventory();
 };
 
@@ -227,9 +255,17 @@ const editInventory = (id) => {
   if (item) {
     document.getElementById('inventory-id').value = item.id;
     document.getElementById('inventory-name').value = item.name;
+    document.getElementById('inventory-category').value = item.category || '';
+    document.getElementById('inventory-brand').value = item.brand || '';
+    document.getElementById('inventory-model').value = item.model || '';
     document.getElementById('inventory-price').value = 'Rp ' + item.price.toLocaleString('id-ID');
     document.getElementById('inventory-stock').value = item.stock;
+    document.getElementById('inventory-min-stock').value = item.minStock || 0;
+    document.getElementById('inventory-description').value = item.description || '';
+    document.getElementById('inventory-supplier').value = item.supplier || '';
+    document.getElementById('inventory-barcode').value = item.barcode || '';
     document.getElementById('inventory-cancel').style.display = 'inline';
+    document.getElementById('product-modal').style.display = 'block';
   }
 };
 
@@ -237,6 +273,7 @@ const cancelInventoryEdit = () => {
   document.getElementById('inventory-form').reset();
   document.getElementById('inventory-id').value = '';
   document.getElementById('inventory-cancel').style.display = 'none';
+  document.getElementById('product-modal').style.display = 'none';
 };
 
 const deleteInventory = async (id) => {
@@ -412,7 +449,7 @@ const deleteCustomer = async (id) => {
 };
 
 const updateLowStockNotification = () => {
-  const lowStockItems = inventory.filter(item => item.stock > 0 && item.stock <= 5);
+  const lowStockItems = inventory.filter(item => item.stock > 0 && item.stock <= (item.minStock || 5));
   const navInventory = document.getElementById('nav-inventory');
   if (navInventory) {
     if (lowStockItems.length > 0) {
@@ -445,13 +482,20 @@ const renderInventoryTable = (items = inventory) => {
   tbody.innerHTML = '';
   items.forEach(item => {
     const row = document.createElement('tr');
-    if (item.stock > 0 && item.stock <= 5) {
+    if (item.stock > 0 && item.stock <= (item.minStock || 5)) {
       row.classList.add('low-stock');
     }
     row.innerHTML = `
       <td>${item.name}</td>
-      <td>${item.price.toLocaleString('id-ID')}</td>
+      <td>${item.category || '-'}</td>
+      <td>${item.brand || '-'}</td>
+      <td>${item.model || '-'}</td>
+      <td>Rp ${item.price.toLocaleString('id-ID')}</td>
       <td>${item.stock}</td>
+      <td>${item.minStock || 0}</td>
+      <td>${item.description || '-'}</td>
+      <td>${item.supplier || '-'}</td>
+      <td>${item.barcode || '-'}</td>
       <td>${item.created_at ? new Date(item.created_at).toLocaleDateString('id-ID') : '-'}</td>
       <td>${item.updated_at ? new Date(item.updated_at).toLocaleDateString('id-ID') : '-'}</td>
       <td>

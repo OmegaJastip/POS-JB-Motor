@@ -20,38 +20,63 @@
 <body>
   <header>
     <h1>POS Alat Motor</h1>
-    <nav>
-      <a href="index.html" class="nav-btn">Home</a>
-      <a href="pages/inventory.html" class="nav-btn">Inventori</a>
-      <a href="pages/sales.html" class="nav-btn">Penjualan</a>
-      <a href="pages/customers.html" class="nav-btn">Pelanggan</a>
-      <a href="pages/reports.html" class="nav-btn">Laporan</a>
-      <a href="pages/logs.html" class="nav-btn">Log Aktivitas</a>
-    </nav>
   </header>
 
   <main>
-    <section id="analytics-section" class="section active">
-      <h2>Analitik Penjualan dan Pembelian Pelanggan</h2>
-      <canvas id="salesChart" width="400" height="200"></canvas>
-      <canvas id="purchaseChart" width="400" height="200" style="margin-top: 2rem;"></canvas>
-    </section>
+    <div class="dashboard">
+      <div class="card">
+        <h3>Jumlah Pelanggan</h3>
+        <p id="customer-count">0</p>
+      </div>
+      <div class="card">
+        <h3>Barang Masuk</h3>
+        <p id="items-in">0</p>
+      </div>
+      <div class="card">
+        <h3>Barang Keluar</h3>
+        <p id="items-out">0</p>
+      </div>
+      <div class="card">
+        <h3>Barang Terjual</h3>
+        <p id="items-sold">0</p>
+      </div>
+      <div class="card">
+        <h3>Retur</h3>
+        <p id="items-returned">0</p>
+      </div>
+      <div class="card">
+        <h3>Stok Barang</h3>
+        <p id="stock-count">0</p>
+      </div>
+    </div>
   </main>
 
-  <section id="logs-section">
-    <h2>Log Aktivitas</h2>
-    <table id="logs-table">
-      <thead>
-        <tr>
-          <th>Tanggal</th>
-          <th>Tipe</th>
-          <th>ID</th>
-          <th>Perubahan</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-  </section>
+  <nav class="bottom-nav">
+    <a href="index.html" class="nav-btn">
+      <span class="icon">🏠</span>
+      <span class="label">Home</span>
+    </a>
+    <a href="pages/inventory.html" class="nav-btn">
+      <span class="icon">📦</span>
+      <span class="label">Inventori</span>
+    </a>
+    <a href="pages/sales.html" class="nav-btn">
+      <span class="icon">💰</span>
+      <span class="label">Penjualan</span>
+    </a>
+    <a href="pages/customers.html" class="nav-btn">
+      <span class="icon">👥</span>
+      <span class="label">Pelanggan</span>
+    </a>
+    <a href="pages/reports.html" class="nav-btn">
+      <span class="icon">📊</span>
+      <span class="label">Laporan</span>
+    </a>
+    <a href="pages/logs.html" class="nav-btn">
+      <span class="icon">📝</span>
+      <span class="label">Log Aktivitas</span>
+    </a>
+  </nav>
 
   <script src="js/db.js"></script>
   <script src="js/app.js"></script>
